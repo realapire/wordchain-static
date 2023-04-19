@@ -1,0 +1,392 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: black;
+    color: white;
+    padding: 20px;
+    font-family: 'Rowdies', cursive;    
+}
+
+.hidden {
+    display: none !important;
+}
+
+.gamemodeHolder {
+    top: 50%;
+    left: 50%;
+    position: absolute;
+    transform: translate(-50%, -50%);  
+    text-align: center;
+}
+
+.gamemodeHolder .helpTitle, .multiplayerHelpText {
+    text-align: center;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    color: rgb(130, 130, 130);
+}
+
+.gamemodePanel {
+    display: flex;
+    gap: 10px;
+}
+
+.gamemode {
+    padding: 20px;
+    border: 2px solid lightgray;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 300px;
+    min-height: 300px;
+    justify-content: space-between;
+}
+
+.gamemode p {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.gamemode .titleGamemode {
+    font-size: 20px;
+}
+
+.gamemode .descGamemode {
+    color: rgb(127, 127, 127);
+    text-align: justify;
+}
+
+input {
+    border: 0;
+    outline: 0;
+    padding: 10px 20px;
+    border-radius: 10px;
+}
+
+.hotseatForm input {
+    width: 100px;
+}
+
+#scoreHolder {
+    position: absolute;
+    bottom: 25px;
+}
+
+#playerTurn {
+    text-align: center;
+    font-size: 40px;
+    text-transform: uppercase;
+}
+
+table {
+    border-collapse: collapse;
+    text-align: center;
+    border: 2px solid #282828;
+}
+
+thead {
+    background-color: #282828;
+}
+
+th:first-child {
+    width: 150px;
+}
+
+th {
+    padding: 10px 30px;
+}
+
+tr.elim {
+    background-color: #9102027d;
+}
+
+tr.active {
+    backdrop-filter: contrast(0.5);
+}
+
+td {
+    padding: 10px 5px;
+    text-transform: uppercase;
+}
+
+td .number {
+    color: black;
+    background-color: lightgray;
+    padding: 2.5px 10px;
+    border-radius: 50%;
+}
+
+.avatar {
+    color: white;
+    filter: drop-shadow(2px 4px 10px black) contrast(0);
+    width: 150px;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 50px;
+    user-select: none;
+    pointer-events: none;
+}
+
+.avatar.mini {
+    margin: 0;
+    width: 30px;
+}
+
+#scoreHolder td:nth-child(odd) {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+button {
+    border: 1px solid gray;
+    padding: 10px 20px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    font-family: 'Rowdies', cursive;
+}
+
+button:hover {
+    background-color: gray;
+}
+
+#btnDecided {
+    margin-top: 20px;
+}
+
+.playerOverview {
+    display: flex;
+    gap: 10px;
+    flex-direction: column;
+    align-items: center;
+}
+
+.playerOverview .players {
+    display: flex;
+    gap: 10px;
+}
+
+.playerOverview .player {
+    min-width: 250px;
+    border: 2px solid rgb(105, 105, 105);
+    padding: 20px 10px;
+    border-radius: 10px;
+    text-transform: uppercase;
+}
+
+.playerOverview p {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#turnTake {
+    text-align: center;
+    font-size: 50px;
+}
+
+#timeLeftHolder {
+    position: absolute;
+    right: 40px;
+    top: 20px;
+    font-size: 40px;
+}
+
+.gamePanel  {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+#letter {
+    text-transform: uppercase;
+    color: #585858;
+}
+
+.username-form {
+    position: fixed;
+    top: 0;
+    left: 0;
+    backdrop-filter: blur(10px);
+    width: 100%;
+    height: 100%;
+}
+
+.username-input {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+.finishPanel {
+    position: absolute;
+    text-align: center;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.finishPanel h2 {
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    font-size: 50px;
+}
+
+.finishPanel table {
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 10px;
+}
+
+.finishPanel td:first-child {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+#btnRestart {
+    margin-top: 10px;
+}
+
+.podium {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    margin-bottom: 20px;
+    gap: 5px;
+}
+
+.podium .secondplace {
+    height: 170px;
+}
+
+.podium .thirdplace {
+    height: 120px;
+}
+
+.podium .firstplace {
+    height: 220px;
+}
+
+.podium div {
+    width: 100px;
+    background: white;
+    position: relative;
+}
+
+.podium .number {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: black;
+    background-color: lightgray;
+    padding: 5px 10px;
+    border-radius: 50%;
+}
+
+.multiplayerEnteringLobby {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.multiplayerForm {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.multiplayerButtons {
+    display: flex;
+    flex-direction: row;
+    gap: 5px;
+}
+
+.multiplayerLobby {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+}
+
+.lobbyInformation {
+    display: flex;
+    gap: 10px;
+    font-size: 30px;
+}
+
+.playersHolder {
+    display: flex;
+    gap: 10px;
+    margin: 20px;
+}
+
+.multiplayerLobby .player {
+    display: flex;
+    padding: 20px;
+    border: 1px solid lightgray;
+    border-radius: 10px;
+    flex-direction: column;
+}
+
+.player .playerName {
+    font-size: 30px;
+}
+
+.player .playerRole {
+    color: #545454;
+}
+
+.btnGoBack {
+    position: absolute;
+    right: 40px;
+    bottom: 20px;
+    color: white;
+    cursor: pointer;
+}
+
+.btnGoBack span {
+    font-size: 40px;
+    color: #2e2e2e;
+}
+
+.btnGoBack span:hover {
+    filter: contrast(0);
+}
+
+footer {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    text-align: center;
+}
+
+footer span {
+    color: rgb(105, 105, 105);
+}

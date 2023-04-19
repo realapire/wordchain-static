@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wordchain Game</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rowdies:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+    <header>
+        <h1 id="usernameHolder"></h1>
+    </header>
+    <main>
+        <div class="gamemodeHolder panel">
+            <p class="helpTitle">
+                <span>Choose your gamemode</span>
+            </p>
+            <div class="gamemodePanel">
+                <div class="gamemode">
+                    <p>
+                        <span class="titleGamemode">Singleplayer</span>
+                        <span class="descGamemode">In this mode, the player plays alone and must find as many words as
+                            possible by using the last letter of the previous word. There is no time limit and the
+                            player can continue as long as he/she can find new words.</span>
+                    </p>
+                    <button type="button" data-gamemode="singleplayer" class="chooseGamemode">Choose Gamemode</button>
+                </div>
+                <div class="gamemode">
+                    <p>
+                        <span class="titleGamemode">Hot-Seat (2-5 players)</span>
+                        <span class="descGamemode">In this mode, a maximum of five players take turns playing. Each
+                            player must find a word within a certain time limit by using the last letter of the previous
+                            word. The player who cannot find a word or repeats a word will be eliminated, and the last
+                            player remaining wins.</span>
+                    </p>
+                    <button type="button" data-gamemode="hot-seat" class="chooseGamemode">Choose Gamemode</button>
+                </div>
+                <div class="gamemode">
+                    <p>
+                        <span class="titleGamemode">Multiplayer (2-5 players)</span>
+                        <span class="descGamemode">This is an online mode where multiple players take turns coming up
+                            with a word that starts with the last letter of the previous word that was said. The goal is
+                            to continue the game until there is only one player left, who is the winner.</span>
+                    </p>
+                    <button type="button" data-gamemode="multiplayer" class="chooseGamemode">Choose Gamemode</button>
+                </div>
+            </div>
+            <div class="hotseatForm hidden">
+                <input autocomplete=off id="txthotseatPlayers" type="text">
+            </div>
+            <div class="playerOverview hidden"></div>
+        </div>
+        <div class="gamePanel panel hidden">
+            <p>
+                <span id="letter"></span>
+            </p>
+            <input type="text" autocomplete=off id="inputTextBox">
+            <button id="inputSubmit" type="button">Submit word</button>
+        </div>
+        <div class="finishPanel panel hidden">
+            <h2>End of game</h2>
+            <div class="podium hidden">
+                <div class="thirdplace"><span class="number">3</span></div>
+                <div class="firstplace"><span class="number">1</span></div>
+                <div class="secondplace"><span class="number">2</span></div>
+            </div>
+            <p>
+                <span>Statistics</span>
+            </p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>NAME</th>
+                        <th>SCORE</th>
+                    </tr>
+                </thead>
+                <tbody id="statsPlayer"></tbody>
+            </table>
+            <button type="button" id="btnRestart">RESTART</button>
+        </div>
+        <div class="multiplayerForm panel hidden">
+            <p class="multiplayerHelpText">
+                <span>Enter a lobby</span>
+            </p>
+            <div class="multiplayerEnteringLobby">
+                <input autocomplete=off type="text" id="txtSession" placeholder="Enter session">
+                <div class="multiplayerButtons">
+                    <button type="button" id="btnJoinSession">Join session</button>
+                    <button type="button" id="btnHostSession">Host session</button>
+                </div>
+            </div>
+            <div class="multiplayerLobby hidden">
+                <div class="lobbyInformation">
+                    <p class="lobbyCode">Code:
+                        <span></span>
+                    </p>
+                </div>
+                <div class="playersHolder">
+                </div>
+                <button type="button" id="btnStartGame">START GAME</button>
+            </div>
+        </div>
+    </main>
+
+    <div id="scoreHolder" class="hidden">
+        <table>
+            <thead>
+                <tr>
+                    <th>NAME</th>
+                    <th>SCORE</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+    </div>
+    <div class="btnGoBack">
+        <p><span>GO BACK</span></p>
+    </div>
+    <h2 id="playerTurn" class="hidden"></h2>
+    <p id="timeLeftHolder" class="hidden">Timer: <span id="timeLeft">10</span>s</p>
+    <div class="errorHolder"></div>
+    <div class="username-form hidden">
+        <div class="username-input">
+            <input autocomplete=off type="text" id="txtUsername" placeholder="Enter an username">
+            <button type="button" id="btnUsername">Set Username</button>
+        </div>
+    </div>
+
+    <footer>
+        <p>
+            <span>&copy; Andre Dubois - Muhammad Awais - Alex Bercean - Pieter-Jan Panneels - Aiman Ahidar</span>
+        </p>
+    </footer>
+    <script src="js/scripts.js"></script>
+</body>
+
+</html>
