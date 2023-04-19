@@ -66,7 +66,7 @@ let sessionId;
 function startMultiplayer() {
     if (!isConnected) {
         socket = new WebSocket('ws://localhost:8080');
-
+            
         socket.addEventListener('open', (event) => {
             console.log('Connection established with Websocket');
             isConnected = true;
@@ -201,12 +201,12 @@ function askUsername() {
         UsernameDOM.usernameHolder.innerText = 'Hello, ' + username;
         UsernameDOM.frmUsername.classList.add('hidden');
     });
-}
+} 
 
 UsernameDOM.usernameHolder.innerText = 'Hello, ' + username;
 
 // Geschiedenis van alle gegeven woorden in een array
-const usedWords = [];
+let usedWords = [];
 const randomWords = ['elephant', 'ghost', 'dog', 'car', 'rocket'];
 
 let startLetter = '';
@@ -638,6 +638,7 @@ DOM.btnRestart.addEventListener('click', function() {
     
     // singleplayer
     if (currentPlayer == -1) {
+        players[0].score = 0;
         GamemodesDOM.gamePanel.classList.remove('hidden');
         FinishDOM.finishPanel.classList.add('hidden');
         TimerDOM.timeLeftHolder.classList.remove('hidden');
@@ -647,6 +648,9 @@ DOM.btnRestart.addEventListener('click', function() {
 
     // hot-seat
     if (currentPlayer != -1 && !isConnected) {
+        for (let i = 0; i < players.length; i++) {
+            players[i].score = 0;
+        }
         FinishDOM.finishPanel.classList.add('hidden');
         GamemodesDOM.helpTitle.classList.remove('hidden');
         generatePlayers(playersAmount);
