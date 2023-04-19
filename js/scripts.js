@@ -20,10 +20,11 @@ const GamemodesDOM = {
     playerOverview: document.querySelector('.playerOverview'),
 };
 
-const UsernameDOM = {
-    frmUsername: document.querySelector('.username-form'),
-    txtUsername: document.querySelector('#txtUsername'),
-    btnUsername: document.querySelector('#btnUsername'),
+const LoginDOM = {
+    frmLogin: document.querySelector('.username-form'),
+    txtEmail: document.querySelector('#txtEmail'),
+    txtPassword: document.querySelector('#txtPassword'),
+    btnLogin: document.querySelector('#btnLogin'),
     usernameHolder: document.querySelector('#usernameHolder')
 };
 
@@ -65,8 +66,8 @@ let sessionId;
 
 function startMultiplayer() {
     if (!isConnected) {
-        socket = new WebSocket('wss://wordchain-ws.onrender.com');
-            
+        socket = new WebSocket('ws://localhost:4000');
+
         socket.addEventListener('open', (event) => {
             console.log('Connection established with Websocket');
             isConnected = true;
@@ -133,7 +134,7 @@ function sendJoinMessage() {
 }
 
 function loadLobby(data) {
-    if(MultiplayerDOM.lobbyHolder.classList.contains('hidden')) {
+    if (MultiplayerDOM.lobbyHolder.classList.contains('hidden')) {
         MultiplayerDOM.lobbyHolder.classList.remove('hidden');
         MultiplayerDOM.multiplayerEnteringLobby.classList.add('hidden');
     }
@@ -143,7 +144,7 @@ function loadLobby(data) {
     players = data.players;
     for (let i = 0; i < data.players.length; i++) {
         let role = 'PLAYER';
-        if(data.players[i].name == hostName) {
+        if (data.players[i].name == hostName) {
             role = 'HOST';
         }
         if (data.players.length == 1) {
@@ -152,11 +153,11 @@ function loadLobby(data) {
         MultiplayerDOM.playersHolder.innerHTML += `<div class='player'>
             <p><span class='playerName'>${data.players[i].name}</span></p>
             <p><span class='playerRole'>${role}</span></p>
-        </div>`; 
+        </div>`;
     }
 }
 
-MultiplayerDOM.btnHostSession.addEventListener('click', function(){
+MultiplayerDOM.btnHostSession.addEventListener('click', function () {
     const message = {
         type: 'create-session'
     }
@@ -164,7 +165,7 @@ MultiplayerDOM.btnHostSession.addEventListener('click', function(){
     socket.send(JSON.stringify(message));
 });
 
-MultiplayerDOM.btnJoinSession.addEventListener('click', function() {
+MultiplayerDOM.btnJoinSession.addEventListener('click', function () {
     const message = {
         type: 'join-session',
         sessionId: MultiplayerDOM.txtSessionId.value
@@ -173,37 +174,79 @@ MultiplayerDOM.btnJoinSession.addEventListener('click', function() {
     socket.send(JSON.stringify(message));
 });
 
-MultiplayerDOM.btnStartGame.addEventListener('click', function() {
+MultiplayerDOM.btnStartGame.addEventListener('click', function () {
+
+    if (players.length < 2 || players.length > 5) {
+        loadError('At least 2 and a maximum of 5 people must be connected');
+        return;
+    }
+
+    for (let i = 0; i < players.length; i++) {
+        const currentPlayer = players[i];
+        for (let j = i + 1; j < players.length; j++) {
+            if (currentPlayer.name === players[j].name) {
+                loadError('Two players have the same name');
+                return;
+            }
+        }
+    }
+
+    
     const message = {
         type: 'start-session',
     };
     socket.send(JSON.stringify(message));
 });
 
-// Username
+// Login
 
-let username = JSON.parse(localStorage.getItem('username')) || '';
-
-if(!username) {
-    askUsername();
-}
-
-function askUsername() {
-    UsernameDOM.frmUsername.classList.remove('hidden');
-    UsernameDOM.btnUsername.addEventListener('click', function() {
-        if(UsernameDOM.txtUsername.value.length < 3) {
-            loadError('Naam moet langer zijn dan 3 karaketers');
-            return;
-        }
-
-        username = UsernameDOM.txtUsername.value;
-        localStorage.setItem('username', JSON.stringify(username));
-        UsernameDOM.usernameHolder.innerText = 'Hello, ' + username;
-        UsernameDOM.frmUsername.classList.add('hidden');
-    });
+let savedPlayerInfo = localStorage.getItem('playerInformation') || '';
+console.log(savedPlayerInfo);
+if(!savedPlayerInfo) {
+    askPlayerInfo();
+} else {
+    username = savedPlayerInfo;
+    LoginDOM.usernameHolder.innerText = 'Hello, ' + username;
 } 
 
-UsernameDOM.usernameHolder.innerText = 'Hello, ' + username;
+function askPlayerInfo() {
+    LoginDOM.frmLogin.classList.remove('hidden');
+    LoginDOM.btnLogin.addEventListener('click', async function () {
+        const info = getPlayerInfo();
+        console.log('info', info);
+
+        username = info.username;
+        /* localStorage.setItem('playerInformation', JSON.stringify(info));
+        LoginDOM.frmLogin.classList.add('hidden'); */
+    });
+}
+
+function getPlayerInfo() {
+    const formData = new FormData();
+    formData.append('identity', LoginDOM.txtEmail.value);
+    formData.append('password', LoginDOM.txtPassword.value);
+    const options = {
+        method: 'POST',
+        body: formData,
+        redirect: 'follow'
+    }
+    const resp = fetch('https://lucas-miserez.be/api/collections/person/auth-with-password', options);
+    if (!resp.ok) {
+        loadError('Error fetching account');
+        return 'error';
+    }
+    const data = resp.json();
+    if (!data.token) {
+        loadError('User has not been found');
+        return 'error';
+    }
+
+    const playerInfo = [{ id: data.record.id, username: data.record.username, token: data.token }];
+
+    return playerInfo;
+}
+
+LoginDOM.usernameHolder.innerText = 'Hello, ' + username;
 
 // Geschiedenis van alle gegeven woorden in een array
 let usedWords = [];
@@ -220,10 +263,12 @@ let eliminatedPlayers = [];
 
 // Gamemode
 GamemodesDOM.gamemodeButtons.forEach(button => {
-    button.addEventListener('click', function(e) {
+    button.addEventListener('click', function (e) {
 
         // reset alle spelers
         players = [];
+
+        DOM.btnGoBack.classList.remove('hidden');
 
         GamemodesDOM.gamemodePanel.classList.add('hidden');
         const selectedGamemode = e.target.getAttribute('data-gamemode');
@@ -237,12 +282,12 @@ GamemodesDOM.gamemodeButtons.forEach(button => {
         if (selectedGamemode == 'hot-seat') {
             GamemodesDOM.helpTitle.innerText = 'ENTER THE AMOUNT OF PLAYERS';
             GamemodesDOM.hotseatForm.classList.remove('hidden');
-            GamemodesDOM.txthotseatPlayers.addEventListener('keypress', function(e) {
+            GamemodesDOM.txthotseatPlayers.addEventListener('keypress', function (e) {
                 if (e.key == 'Enter') {
                     if (parseInt(e.target.value) >= 2 && parseInt(e.target.value) <= 5) {
                         // startMultiGame(parseInt(e.target.value));   
                         eliminatedPlayers = [];
-                        generatePlayers(parseInt(e.target.value)); 
+                        generatePlayers(parseInt(e.target.value));
                     }
                 }
             })
@@ -259,8 +304,8 @@ function generatePlayers(amount) {
     GamemodesDOM.playerOverview.innerHTML = '<div class="players"></div>';
     for (let i = 0; i < amount; i++) {
         players.push({ name: `player ${i + 1}`, score: 0, word: getRandomWord(), eliminated: false });
-        GamemodesDOM.playerOverview.querySelector('.players').innerHTML += 
-        `<div class='player'>
+        GamemodesDOM.playerOverview.querySelector('.players').innerHTML +=
+            `<div class='player'>
             <p>
                 <img src='img/${players[i].word}.png' class='avatar' alt='img'>
                 <span>Name: ${players[i].name}</span>
@@ -273,12 +318,12 @@ function generatePlayers(amount) {
     GamemodesDOM.hotseatForm.classList.add('hidden');
     GamemodesDOM.helpTitle.innerText = 'DECIDE WHO IS WHO';
     GamemodesDOM.playerOverview.classList.remove('hidden');
-    
-    document.querySelector('#btnDecided').addEventListener('click', function() {
+
+    document.querySelector('#btnDecided').addEventListener('click', function () {
         let time = 3;
         GamemodesDOM.helpTitle.innerText = `GAME WILL BEGIN IN ${time} SECONDS`;
         const playerOverviewCountdown = setInterval(() => {
-            if(time == 0) {
+            if (time == 0) {
                 clearInterval(playerOverviewCountdown);
                 GamemodesDOM.playerOverview.classList.add('hidden');
                 GamemodesDOM.helpTitle.classList.add('hidden');
@@ -314,16 +359,16 @@ function startSingleplayer() {
 }
 
 function startMultiGame(serverLetter = null) {
-    if(!document.querySelector('.multiplayerLobby').classList.contains('hidden')) {
+    if (!document.querySelector('.multiplayerLobby').classList.contains('hidden')) {
         document.querySelector('.multiplayerLobby').classList.add('hidden');
     }
-    
+
     currentPlayer = 0;
-    
+
     DOM.currentPlayerTurn.classList.remove('hidden');
-    
+
     // Start het spel
-    if(!isConnected){
+    if (!isConnected) {
         loadNewLetter();
         DOM.currentPlayerTurn.innerText = players[currentPlayer].word + `'s turn`;
     } else {
@@ -331,7 +376,7 @@ function startMultiGame(serverLetter = null) {
         MultiplayerDOM.multiplayerForm.classList.add('hidden');
         TimerDOM.timeLeftHolder.classList.remove('hidden');
         const hiddenPanel = document.querySelector('.gamePanel.hidden');
-        if(hiddenPanel) {
+        if (hiddenPanel) {
             hiddenPanel.classList.remove('hidden');
             DOM.scoreHolder.classList.remove('hidden');
             loadScore();
@@ -339,7 +384,7 @@ function startMultiGame(serverLetter = null) {
         startLetter = serverLetter;
         DOM.letterHolder.innerText = `Enter word beginning with ${startLetter}`;
     }
-    
+
 }
 
 // Game logica
@@ -351,7 +396,7 @@ async function checkWord(word) {
     const res = await fetch(URL.enWoordenboek + word);
     const data = await res.json();
 
-    if(isConnected) {
+    if (isConnected) {
         const message = {
             type: 'check-word',
             word,
@@ -450,11 +495,11 @@ function nextPlayer() {
     if (currentPlayer > players.length - 1) {
         currentPlayer = 0;
     }
-    
-    if(players[currentPlayer].eliminated) {
+
+    if (players[currentPlayer].eliminated) {
         nextPlayer();
     }
-    
+
     if (isConnected) {
         DOM.currentPlayerTurn.innerText = players[currentPlayer].name + `'s turn`;
     } else {
@@ -478,16 +523,16 @@ function startTimer() {
         if (currentPlayer != -1 && eliminatedPlayers.length == players.length - 1) {
             clearInterval(countDownTimer);
         }
-        if(time == 0) {
-            if(isConnected) {
+        if (time == 0) {
+            if (isConnected) {
                 const message = {
                     type: 'time-up',
-                    currentPlayer: players[currentPlayer]
+                    currentplayer: players[currentPlayer]
                 };
                 console.log('Sending message:', message);
                 socket.send(JSON.stringify(message));
-            }
-            eliminatePlayer();
+            } 
+            eliminatePlayer();  
             clearInterval(countDownTimer);
             startTimer();
         }
@@ -496,7 +541,7 @@ function startTimer() {
 
 function switchGameOver() {
     for (let i = 0; i < players.length; i++) {
-        if(i == 2) {
+        if (i == 2) {
             players[i].eliminated = false;
         } else {
             players[i].eliminated = true;
@@ -515,26 +560,26 @@ function loadScore() {
     for (let i = 0; i < players.length; i++) {
         let eliminatedClass = '';
         let activePlayerClass = '';
-        if(players[i].eliminated) {
+        if (players[i].eliminated) {
             eliminatedClass = 'elim';
         }
-        if(players[currentPlayer].name == players[i].name) {
+        if (players[currentPlayer].name == players[i].name) {
             activePlayerClass = 'active';
-        } 
-        if(!isConnected) {
+        }
+        if (!isConnected) {
             DOM.scoreHolder.querySelector('tbody').innerHTML += `<tr class='${eliminatedClass} ${activePlayerClass}'><td><img class='avatar mini' src='img/${players[i].word}.png' alt='img'>${players[i].word}</td><td>${players[i].score}</td></tr>`;
         } else {
             DOM.scoreHolder.querySelector('tbody').innerHTML += `<tr class='${eliminatedClass} ${activePlayerClass}'><td>${players[i].name}</td><td>${players[i].score}</td></tr>`;
         }
 
     }
-    
+
 }
 
 function loadNewLetter(serverLetter = null) {
     startTimer();
     const hiddenPanel = document.querySelector('.gamePanel.hidden');
-    if(hiddenPanel) {
+    if (hiddenPanel) {
         hiddenPanel.classList.remove('hidden');
         if (currentPlayer != -1) {
             DOM.scoreHolder.classList.toggle('hidden');
@@ -542,7 +587,7 @@ function loadNewLetter(serverLetter = null) {
         loadScore();
     }
 
-    if(isConnected) {
+    if (isConnected) {
         nextLetter = serverLetter;
         DOM.letterHolder.innerText = `Enter word beginning with ${nextLetter}`;
         return;
@@ -564,7 +609,7 @@ function finish() {
     TimerDOM.timeLeftHolder.classList.add('hidden');
     DOM.currentPlayerTurn.classList.add('hidden');
     DOM.scoreHolder.classList.add('hidden');
-    FinishDOM.playerStatsTable.innerHTML = '';    
+    FinishDOM.playerStatsTable.innerHTML = '';
     if (currentPlayer != -1) {
         FinishDOM.podiumHolder.classList.remove('hidden');
     }
@@ -574,12 +619,12 @@ function finish() {
             FinishDOM.playerStatsTable.innerHTML += `<tr><td>${player.name}</td><td>${player.score}</td></tr>`
         } else {
             let placement = '';
-            if(player.name == first.name) placement = '<span class="number">1</span>';
-            if(player.name == second.name) placement = '<span class="number">2</span>';
+            if (player.name == first.name) placement = '<span class="number">1</span>';
+            if (player.name == second.name) placement = '<span class="number">2</span>';
             if (players.length > 2) {
-                if(player.name == third.name) placement = '<span class="number">3</span>';
+                if (player.name == third.name) placement = '<span class="number">3</span>';
             }
-            if(!isConnected) {
+            if (!isConnected) {
                 FinishDOM.playerStatsTable.innerHTML += `<tr><td><img src='img/${player.word}.png' class='avatar mini' alt='img'>${player.word}${placement}</td><td>${player.score}</td></tr>`
             } else {
                 FinishDOM.playerStatsTable.innerHTML += `<tr><td>${player.name}${placement}</td><td>${player.score}</td></tr>`
@@ -593,7 +638,7 @@ function getTopThree() {
     if (currentPlayer == -1 && players.length < 3) return {};
     let firstPlace, secondPlace, thirdPlace;
 
-    for(let i = 0; i < players.length; i++) {
+    for (let i = 0; i < players.length; i++) {
         if (!players[i].eliminated) {
             firstPlace = players[i];
         }
@@ -606,8 +651,27 @@ function getTopThree() {
 }
 
 function loadError(msgError) {
-    DOM.errorHolder.innerHTML += `<div class='error'>${msgError}</div>`;
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'error';
+    errorDiv.innerText = msgError;
+
+    DOM.errorHolder.appendChild(errorDiv);
+
+    setTimeout(function () {
+        const fadeEffect = setInterval(function () {
+            if (!errorDiv.style.opacity) {
+                errorDiv.style.opacity = 1;
+            }
+            if (errorDiv.style.opacity > 0) {
+                errorDiv.style.opacity -= 0.1;
+            } else {
+                clearInterval(fadeEffect);
+                DOM.errorHolder.removeChild(errorDiv);
+            }
+        }, 50);
+    }, 750);
 }
+
 
 DOM.btnSubmit.addEventListener('click', () => checkWord(DOM.txtInputBox.value));
 DOM.txtInputBox.addEventListener('keypress', function (e) {
@@ -617,7 +681,7 @@ DOM.txtInputBox.addEventListener('keypress', function (e) {
     }
 });
 
-DOM.btnGoBack.addEventListener('click', function() {
+DOM.btnGoBack.addEventListener('click', function () {
     /* if(isConnected) {
         socket.close();
         isConnected = false;
@@ -631,14 +695,16 @@ DOM.btnGoBack.addEventListener('click', function() {
     location.reload();
 });
 
-DOM.btnRestart.addEventListener('click', function() {
+DOM.btnRestart.addEventListener('click', function () {
     const playersAmount = players.length;
     usedWords = [];
     players = [];
-    
+
     // singleplayer
     if (currentPlayer == -1) {
-        players[0].score = 0;
+        if (players[0].score) {
+            players[0].score = 0;
+        }
         GamemodesDOM.gamePanel.classList.remove('hidden');
         FinishDOM.finishPanel.classList.add('hidden');
         TimerDOM.timeLeftHolder.classList.remove('hidden');
