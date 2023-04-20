@@ -66,7 +66,7 @@ let sessionId;
 
 function startMultiplayer() {
     if (!isConnected) {
-        socket = new WebSocket('wss://wordchain-ws.onrender.com');
+        socket = new WebSocket('ws://localhost:4000');
 
         socket.addEventListener('open', (event) => {
             console.log('Connection established with Websocket');
@@ -127,11 +127,14 @@ function startMultiplayer() {
 function sendJoinMessage() {
     const message = {
         type: 'join',
-        username: username
+        username: username,
+        fetchedId: savedPlayerInfo.id
     };
     console.log('Sending message:', message);
     socket.send(JSON.stringify(message));
 }
+
+let host = '';
 
 function loadLobby(data) {
     if (MultiplayerDOM.lobbyHolder.classList.contains('hidden')) {
@@ -145,6 +148,7 @@ function loadLobby(data) {
     for (let i = 0; i < data.players.length; i++) {
         let role = 'PLAYER';
         if (data.players[i].name == hostName) {
+            host = data.players[i];
             role = 'HOST';
         }
         if (data.players.length == 1) {
@@ -191,7 +195,8 @@ MultiplayerDOM.btnStartGame.addEventListener('click', function () {
         }
     }
 
-    
+    createMatch();
+
     const message = {
         type: 'start-session',
     };
@@ -200,28 +205,31 @@ MultiplayerDOM.btnStartGame.addEventListener('click', function () {
 
 // Login
 
-let savedPlayerInfo = localStorage.getItem('playerInformation') || '';
+let savedPlayerInfo = JSON.parse(localStorage.getItem('playerInformation')) || '';
+let username = '';
+
 console.log(savedPlayerInfo);
-if(!savedPlayerInfo) {
+
+if (!savedPlayerInfo) {
     askPlayerInfo();
 } else {
-    username = savedPlayerInfo;
-    LoginDOM.usernameHolder.innerText = 'Hello, ' + username;
-} 
+    username = savedPlayerInfo.username;
+    LoginDOM.usernameHolder.innerText = 'Hello, ' + savedPlayerInfo.username.split('.')[0];
+}
 
-function askPlayerInfo() {
+async function askPlayerInfo() {
     LoginDOM.frmLogin.classList.remove('hidden');
     LoginDOM.btnLogin.addEventListener('click', async function () {
-        const info = getPlayerInfo();
-        console.log('info', info);
+        savedPlayerInfo = await getPlayerInfo();
 
-        username = info.username;
-        /* localStorage.setItem('playerInformation', JSON.stringify(info));
-        LoginDOM.frmLogin.classList.add('hidden'); */
+        username = savedPlayerInfo.username;
+        LoginDOM.usernameHolder.innerText = 'Hello, ' + savedPlayerInfo.username.split('.')[0];
+        localStorage.setItem('playerInformation', JSON.stringify(savedPlayerInfo));
+        LoginDOM.frmLogin.classList.add('hidden');
     });
 }
 
-function getPlayerInfo() {
+async function getPlayerInfo() {
     const formData = new FormData();
     formData.append('identity', LoginDOM.txtEmail.value);
     formData.append('password', LoginDOM.txtPassword.value);
@@ -230,23 +238,21 @@ function getPlayerInfo() {
         body: formData,
         redirect: 'follow'
     }
-    const resp = fetch('https://lucas-miserez.be/api/collections/person/auth-with-password', options);
+    const resp = await fetch('https://lucas-miserez.be/api/collections/person/auth-with-password', options);
     if (!resp.ok) {
         loadError('Error fetching account');
         return 'error';
     }
-    const data = resp.json();
+    const data = await resp.json();
     if (!data.token) {
         loadError('User has not been found');
         return 'error';
     }
 
-    const playerInfo = [{ id: data.record.id, username: data.record.username, token: data.token }];
+    const playerInfo = { id: data.record.id, username: data.record.username, email: LoginDOM.txtEmail.value, token: data.token };
 
     return playerInfo;
 }
-
-LoginDOM.usernameHolder.innerText = 'Hello, ' + username;
 
 // Geschiedenis van alle gegeven woorden in een array
 let usedWords = [];
@@ -259,6 +265,7 @@ let players = [];
 let currentPlayer = -1;
 
 let eliminatedPlayers = [];
+const teamID = 'foz0mvij5qb59dq';
 //
 
 // Gamemode
@@ -266,7 +273,7 @@ GamemodesDOM.gamemodeButtons.forEach(button => {
     button.addEventListener('click', function (e) {
 
         // reset alle spelers
-        players = [];
+        // players = [];
 
         DOM.btnGoBack.classList.remove('hidden');
 
@@ -355,8 +362,99 @@ function getRandomWord() {
 
 function startSingleplayer() {
     players.push({ 'name': username, 'score': 0 });
+
+    createMatch(savedPlayerInfo.id, savedPlayerInfo.id);
+
     loadNewLetter();
 }
+
+
+// API calls
+
+async function createMatch(spelers, hostID) {
+	var myHeaders = new Headers();
+	myHeaders.append("Content-Type", "application/json");
+	myHeaders.append("Authorization", "Bearer " + savedPlayerInfo.token);
+
+	var raw = JSON.stringify({
+		"spelers": [
+            spelers
+		],
+		"host": hostID,    
+		"team": teamID
+	});
+
+	var requestOptions = {
+		method: 'POST',
+		headers: myHeaders,
+		body: raw,
+		redirect: 'follow'
+	};
+
+	await fetch("https://lucas-miserez.be/api/collections/match/records", requestOptions)
+		.then(response => response.json())
+		.then(result => {
+			match = result.id;
+		})
+		.catch(error => console.log('error', error));
+}
+
+let collectionScoreIds = [];
+
+async function createScorePerPlayer(playerId, plaats, score) {
+	var myHeaders = new Headers();
+	myHeaders.append("Content-Type", "application/json");
+	myHeaders.append("Authorization", "Bearer " + savedPlayerInfo.token);
+
+	var raw = JSON.stringify({
+		"player": playerId,
+		"plaats": plaats,
+		"score": score,
+		"score_is_van_team": teamID
+	});
+
+	var requestOptions = {
+		method: 'POST',
+		headers: myHeaders,
+		body: raw,
+		redirect: 'follow'
+	};
+
+	await fetch("https://lucas-miserez.be/api/collections/score/records", requestOptions)
+		.then(response => response.json())
+		.then(result => {
+            console.log(host);
+			collectionScoreIds.push(result.id);
+		})
+		.catch(error => console.log('error', error));
+
+    console.log(collectionScoreIds);
+}
+
+async function endGame(userIdVanWinnaar) {
+	var myHeaders = new Headers();
+	myHeaders.append("Content-Type", "application/json");
+	myHeaders.append("Authorization", "Bearer " + verificationToken);
+
+	var raw = JSON.stringify({
+		"scores": scores,
+		"winnaar": userIdVanWinnaar,
+		"d0n3": true
+	});
+
+	var requestOptions = {
+		method: 'PATCH',
+		headers: myHeaders,
+		body: raw,
+		redirect: 'follow'
+	};
+
+	fetch("https://lucas-miserez.be/api/collections/match/records/" + match, requestOptions)
+		.then(response => response.text())
+		.then(result => console.log(result))
+		.catch(error => console.log('error', error));
+}
+
 
 function startMultiGame(serverLetter = null) {
     if (!document.querySelector('.multiplayerLobby').classList.contains('hidden')) {
@@ -531,8 +629,8 @@ function startTimer() {
                 };
                 console.log('Sending message:', message);
                 socket.send(JSON.stringify(message));
-            } 
-            eliminatePlayer();  
+            }
+            eliminatePlayer();
             clearInterval(countDownTimer);
             startTimer();
         }
@@ -604,6 +702,10 @@ function loadNewLetter(serverLetter = null) {
 }
 
 function finish() {
+    if (countDownTimer != undefined) {
+        clearInterval(countDownTimer);
+    }
+
     DOM.errorHolder.innerHTML = '';
     FinishDOM.finishPanel.classList.remove('hidden');
     TimerDOM.timeLeftHolder.classList.add('hidden');
@@ -613,6 +715,7 @@ function finish() {
     if (currentPlayer != -1) {
         FinishDOM.podiumHolder.classList.remove('hidden');
     }
+
     const { first, second, third } = getTopThree();
     players.forEach(player => {
         if (currentPlayer == -1) {
@@ -631,7 +734,43 @@ function finish() {
             }
         }
     });
+
+    
+    if (currentPlayer == -1) {
+        createScorePerPlayer(savedPlayerInfo.id, 1, players[0].score);
+        endGame(savedPlayerInfo.id);
+    } else {
+        if (isConnected) {
+            console.log(getCurrentPlayerById());
+            // console.log(eliminatedPlayers[getCurrentPlayerById()], players[getCurrentPlayerById()].score);
+            console.log(getPlayerPosition());
+                
+            createScorePerPlayer(savedPlayerInfo.id, getPlayerPosition(), players[getCurrentPlayerById()].score);
+        }    
+    }
+
     GamemodesDOM.gamePanel.classList.add('hidden');
+}
+
+function getCurrentPlayerById() {
+    for (let i = 0; i < players.length; i++) {
+        if (players[i].fetchid == savedPlayerInfo.id) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+function getPlayerPosition() {
+    for (let i = 2; i < eliminatedPlayers.length + 2; i++)
+    {
+        if (eliminatedPlayers[i - 2].fetchid == savedPlayerInfo.id) {
+            return i;
+        }    
+    }
+
+    return 1;
 }
 
 function getTopThree() {
