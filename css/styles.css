@@ -369,13 +369,22 @@ button:hover {
     cursor: pointer;
 }
 
-.btnGoBack span {
+.btnGoBack span, .btnLogout span {
     font-size: 40px;
     color: #2e2e2e;
+    transition: filter 0.3s;
 }
 
-.btnGoBack span:hover {
+.btnGoBack span:hover, .btnLogout span:hover {
     filter: contrast(0);
+}
+
+.btnLogout {
+    position: absolute;
+    right: 40px;
+    top: 20px;
+    color: white;
+    cursor: pointer;
 }
 
 .errorHolder {

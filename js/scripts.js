@@ -6,7 +6,8 @@ const DOM = {
     scoreHolder: document.querySelector('#scoreHolder'),
     currentPlayerTurn: document.querySelector('#playerTurn'),
     btnGoBack: document.querySelector('.btnGoBack'),
-    btnRestart: document.querySelector('#btnRestart')
+    btnRestart: document.querySelector('#btnRestart'),
+    btnLogout: document.querySelector('.btnLogout')
 };
 
 const GamemodesDOM = {
@@ -105,6 +106,7 @@ function startMultiplayer() {
                 case 'time-up':
                     eliminatePlayer();
                     loadScore();
+                    DOM.txtInputBox.value = '';
                 case 'session-left':
                     loadLobby(data);
             }
@@ -142,12 +144,14 @@ function loadLobby(data) {
         MultiplayerDOM.multiplayerEnteringLobby.classList.add('hidden');
     }
     MultiplayerDOM.playersHolder.innerHTML = '';
-    const hostName = data.host.name;
+    const hostName = data.host;
+    console.log('hostname', hostName);
+
     MultiplayerDOM.lobbyCode.innerText = data.sessionId;
     players = data.players;
     for (let i = 0; i < data.players.length; i++) {
         let role = 'PLAYER';
-        if (data.players[i].name == hostName) {
+        if (data.players[i].name == hostName.name) {
             host = data.players[i];
             role = 'HOST';
         }
@@ -157,7 +161,11 @@ function loadLobby(data) {
         MultiplayerDOM.playersHolder.innerHTML += `<div class='player'>
             <p><span class='playerName'>${data.players[i].name}</span></p>
             <p><span class='playerRole'>${role}</span></p>
-        </div>`;
+            </div>`;
+    }
+
+    if (savedPlayerInfo.id == hostName.fetchid) {
+        MultiplayerDOM.btnStartGame.classList.remove('hidden');
     }
 }
 
@@ -195,7 +203,7 @@ MultiplayerDOM.btnStartGame.addEventListener('click', function () {
         }
     }
 
-    createMatch();
+    createMatch(players.map(player => player.fetchid), host.fetchid);
 
     const message = {
         type: 'start-session',
@@ -271,9 +279,7 @@ const teamID = 'foz0mvij5qb59dq';
 // Gamemode
 GamemodesDOM.gamemodeButtons.forEach(button => {
     button.addEventListener('click', function (e) {
-
-        // reset alle spelers
-        // players = [];
+        DOM.btnLogout.classList.add('hidden');
 
         DOM.btnGoBack.classList.remove('hidden');
 
@@ -320,13 +326,13 @@ function generatePlayers(amount) {
             </p>
         </div>`
     }
-    console.log(players);
     GamemodesDOM.playerOverview.innerHTML += '<button type="button" id="btnDecided">START</button>';
     GamemodesDOM.hotseatForm.classList.add('hidden');
     GamemodesDOM.helpTitle.innerText = 'DECIDE WHO IS WHO';
     GamemodesDOM.playerOverview.classList.remove('hidden');
 
     document.querySelector('#btnDecided').addEventListener('click', function () {
+        document.querySelector('#btnDecided').classList.add('hidden');
         let time = 3;
         GamemodesDOM.helpTitle.innerText = `GAME WILL BEGIN IN ${time} SECONDS`;
         const playerOverviewCountdown = setInterval(() => {
@@ -371,15 +377,15 @@ function startSingleplayer() {
 
 // API calls
 
+let matchId = '';
+
 async function createMatch(spelers, hostID) {
 	var myHeaders = new Headers();
 	myHeaders.append("Content-Type", "application/json");
 	myHeaders.append("Authorization", "Bearer " + savedPlayerInfo.token);
 
 	var raw = JSON.stringify({
-		"spelers": [
-            spelers
-		],
+		"spelers": spelers,
 		"host": hostID,    
 		"team": teamID
 	});
@@ -394,7 +400,8 @@ async function createMatch(spelers, hostID) {
 	await fetch("https://lucas-miserez.be/api/collections/match/records", requestOptions)
 		.then(response => response.json())
 		.then(result => {
-			match = result.id;
+                matchId = result.id;
+            
 		})
 		.catch(error => console.log('error', error));
 }
@@ -423,10 +430,11 @@ async function createScorePerPlayer(playerId, plaats, score) {
 	await fetch("https://lucas-miserez.be/api/collections/score/records", requestOptions)
 		.then(response => response.json())
 		.then(result => {
-            console.log(host);
-			collectionScoreIds.push(result.id);
+            if (host.fetchid == playerId) {
+                collectionScoreIds.push(result.id);
+            }
 		})
-		.catch(error => console.log('error', error));
+		.catch(error => loadError('error', error));
 
     console.log(collectionScoreIds);
 }
@@ -434,10 +442,10 @@ async function createScorePerPlayer(playerId, plaats, score) {
 async function endGame(userIdVanWinnaar) {
 	var myHeaders = new Headers();
 	myHeaders.append("Content-Type", "application/json");
-	myHeaders.append("Authorization", "Bearer " + verificationToken);
+	myHeaders.append("Authorization", "Bearer " + savedPlayerInfo.token);
 
 	var raw = JSON.stringify({
-		"scores": scores,
+		"scores": collectionScoreIds,
 		"winnaar": userIdVanWinnaar,
 		"d0n3": true
 	});
@@ -449,10 +457,10 @@ async function endGame(userIdVanWinnaar) {
 		redirect: 'follow'
 	};
 
-	fetch("https://lucas-miserez.be/api/collections/match/records/" + match, requestOptions)
+	fetch("https://lucas-miserez.be/api/collections/match/records/" + matchId, requestOptions)
 		.then(response => response.text())
 		.then(result => console.log(result))
-		.catch(error => console.log('error', error));
+		.catch(error => console.error('error', error));
 }
 
 
@@ -745,7 +753,11 @@ function finish() {
             // console.log(eliminatedPlayers[getCurrentPlayerById()], players[getCurrentPlayerById()].score);
             console.log(getPlayerPosition());
                 
-            createScorePerPlayer(savedPlayerInfo.id, getPlayerPosition(), players[getCurrentPlayerById()].score);
+            // if host : 
+            if (host.fetchid == savedPlayerInfo.id) {
+                createScorePerPlayer(savedPlayerInfo.id, getPlayerPosition(), players[getCurrentPlayerById()].score);
+                endGame(first.fetchid);
+            }
         }    
     }
 
@@ -805,7 +817,9 @@ function loadError(msgError) {
                 errorDiv.style.opacity -= 0.1;
             } else {
                 clearInterval(fadeEffect);
-                DOM.errorHolder.removeChild(errorDiv);
+                if (DOM.errorHolder.innerHTML != '') {
+                    DOM.errorHolder.removeChild(errorDiv);
+                }
             }
         }, 50);
     }, 750);
@@ -821,17 +835,11 @@ DOM.txtInputBox.addEventListener('keypress', function (e) {
 });
 
 DOM.btnGoBack.addEventListener('click', function () {
-    /* if(isConnected) {
-        socket.close();
-        isConnected = false;
-    }
-
-    document.querySelectorAll('.panel').forEach(panel => {
-        panel.classList.add('hidden');
-    });
-    GamemodesDOM.gamemodeHolder.classList.remove('hidden'); */
-
     location.reload();
+});
+
+DOM.btnLogout.addEventListener('click', function() {
+
 });
 
 DOM.btnRestart.addEventListener('click', function () {
@@ -841,21 +849,16 @@ DOM.btnRestart.addEventListener('click', function () {
 
     // singleplayer
     if (currentPlayer == -1) {
-        if (players[0].score) {
-            players[0].score = 0;
-        }
         GamemodesDOM.gamePanel.classList.remove('hidden');
         FinishDOM.finishPanel.classList.add('hidden');
         TimerDOM.timeLeftHolder.classList.remove('hidden');
         DOM.currentPlayerTurn.classList.remove('hidden');
         startSingleplayer();
+        loadScore();
     }
-
+    
     // hot-seat
     if (currentPlayer != -1 && !isConnected) {
-        for (let i = 0; i < players.length; i++) {
-            players[i].score = 0;
-        }
         FinishDOM.finishPanel.classList.add('hidden');
         GamemodesDOM.helpTitle.classList.remove('hidden');
         generatePlayers(playersAmount);
