@@ -67,7 +67,7 @@ let sessionId;
 
 function startMultiplayer() {
     if (!isConnected) {
-        socket = new WebSocket('ws://localhost:4000');
+        socket = new WebSocket('wss://wordchain-ws.onrender.com');
 
         socket.addEventListener('open', (event) => {
             console.log('Connection established with Websocket');
@@ -869,7 +869,3 @@ DOM.btnRestart.addEventListener('click', function () {
 
     }
 });
-
-function backToLobby() {
-
-}
