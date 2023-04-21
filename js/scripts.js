@@ -839,7 +839,8 @@ DOM.btnGoBack.addEventListener('click', function () {
 });
 
 DOM.btnLogout.addEventListener('click', function() {
-
+    localStorage.setItem('playerInformation', JSON.stringify(''));
+    location.reload();
 });
 
 DOM.btnRestart.addEventListener('click', function () {
@@ -858,14 +859,14 @@ DOM.btnRestart.addEventListener('click', function () {
     }
     
     // hot-seat
-    if (currentPlayer != -1 && !isConnected) {
+/*     if (currentPlayer != -1 && !isConnected) {
         FinishDOM.finishPanel.classList.add('hidden');
         GamemodesDOM.helpTitle.classList.remove('hidden');
         generatePlayers(playersAmount);
-    }
+    } */
 
     // multiplayer
     if (currentPlayer != -1 && isConnected) {
-
+                
     }
 });
