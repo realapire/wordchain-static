@@ -41,6 +41,7 @@ const TimerDOM = {
 };
 
 const MultiplayerDOM = {
+    connectingPanel: document.querySelector('.connecting'),
     multiplayerEnteringLobby: document.querySelector('.multiplayerEnteringLobby'),
     multiplayerForm: document.querySelector('.multiplayerForm'),
     multiplayerHelpText: document.querySelector('.multiplayerHelpText'),
@@ -67,12 +68,15 @@ let sessionId;
 
 function startMultiplayer() {
     if (!isConnected) {
+        MultiplayerDOM.connectingPanel.classList.remove('hidden');
+
         socket = new WebSocket('wss://wordchain-ws.onrender.com');
 
         socket.addEventListener('open', (event) => {
             console.log('Connection established with Websocket');
             isConnected = true;
             sendJoinMessage();
+            MultiplayerDOM.connectingPanel.classList.add('hidden');
         });
 
         socket.addEventListener('message', (event) => {
@@ -280,7 +284,7 @@ const teamID = 'foz0mvij5qb59dq';
 GamemodesDOM.gamemodeButtons.forEach(button => {
     button.addEventListener('click', function (e) {
         DOM.btnLogout.classList.add('hidden');
-
+        LoginDOM.usernameHolder.classList.add('hidden');
         DOM.btnGoBack.classList.remove('hidden');
 
         GamemodesDOM.gamemodePanel.classList.add('hidden');
@@ -478,7 +482,7 @@ function startMultiGame(serverLetter = null) {
         loadNewLetter();
         DOM.currentPlayerTurn.innerText = players[currentPlayer].word + `'s turn`;
     } else {
-        DOM.currentPlayerTurn.innerText = players[currentPlayer].name + `'s turn`;
+        DOM.currentPlayerTurn.innerText = players[currentPlayer].name.split('.')[0] + `'s turn`;
         MultiplayerDOM.multiplayerForm.classList.add('hidden');
         TimerDOM.timeLeftHolder.classList.remove('hidden');
         const hiddenPanel = document.querySelector('.gamePanel.hidden');
@@ -607,7 +611,7 @@ function nextPlayer() {
     }
 
     if (isConnected) {
-        DOM.currentPlayerTurn.innerText = players[currentPlayer].name + `'s turn`;
+        DOM.currentPlayerTurn.innerText = players[currentPlayer].name.split('.')[1] + `'s turn`;
     } else {
         DOM.currentPlayerTurn.innerText = players[currentPlayer].word + `'s turn`;
     }
@@ -640,7 +644,9 @@ function startTimer() {
             }
             eliminatePlayer();
             clearInterval(countDownTimer);
-            startTimer();
+            if (currentPlayer != -1) {
+                startTimer();
+            }
         }
     }, 1000);
 }
@@ -844,6 +850,8 @@ DOM.btnLogout.addEventListener('click', function() {
 });
 
 DOM.btnRestart.addEventListener('click', function () {
+    alert('Restart is unstable');
+
     const playersAmount = players.length;
     usedWords = [];
     players = [];

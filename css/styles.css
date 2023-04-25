@@ -404,6 +404,22 @@ button:hover {
     border-radius: 15px;
 }
 
+.connecting {
+    position: fixed;
+    top: 0;
+    left: 0;
+    background-color: black;
+    height: 100%;
+    width: 100%;
+}
+
+.connecting p {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
 footer {
     position: absolute;
     bottom: 10px;
@@ -415,4 +431,88 @@ footer {
 
 footer span {
     color: rgb(105, 105, 105);
+}
+
+@media (max-width: 1100px) {
+    #usernameHolder {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .btnLogout {
+        top: 5px;
+        right: 5px;
+    }
+
+    .btnGoBack {
+        position: fixed;
+        bottom: 7.5px;
+        right: 7.5px;
+        text-align: right;
+        z-index: 99;
+    }
+
+    .btnLogout span, .btnGoBack span {
+        font-size: 20px;
+    }
+
+    .gamemodeHolder {
+        position: relative;
+        top: 0;
+        left: 0;
+        transform: none;
+    }
+
+    .gamemodePanel {
+        flex-direction: column;
+        gap: 20px;
+        align-items: center;
+        margin-bottom: 50px;
+    }
+
+    .playersOverview {
+        margin-bottom: 30px;
+    }
+
+    .playersHolder {
+        flex-direction: column;
+    }
+
+    .players {
+        flex-direction: column;
+    }
+
+    .finishPanel h2 {
+        font-size: 30px;
+    }
+
+    #letter {
+        font-size: 11px;
+    }
+
+    #timeLeftHolder {
+        position: relative;
+        right: 0;
+        top: 0;
+        font-size: 20px;
+        text-align: center;
+        color: #444444;
+    }
+
+    .gamemodeHolder .helpTitle, .multiplayerHelpText {
+        font-size: 11px;
+    }
+
+    footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        transform: none;
+        background-color: black;
+        padding: 10px;
+    }
+
+    .multiplayerForm {
+        width: 100%;
+    }
 }
