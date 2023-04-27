@@ -69,6 +69,10 @@ input {
     border-radius: 10px;
 }
 
+input:disabled {
+    color: rgba(255, 255, 255, 0.504);
+}
+
 .hotseatForm input {
     width: 100px;
 }

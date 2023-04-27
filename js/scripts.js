@@ -61,6 +61,17 @@ const URL = {
 
 const letters = 'abcdefghijklmnopqrstuvwxyz';
 
+DOM.txtInputBox.addEventListener('input', function(e) {
+    if (isConnected) {
+        const message = {
+            type: 'input-field',
+            input: e.target.value,
+            currentplayer: players[currentPlayer]
+        };
+        socket.send(JSON.stringify(message));
+    }
+});
+
 // Multiplayer 
 let socket;
 let isConnected = false;
@@ -107,12 +118,17 @@ function startMultiplayer() {
                     loadScore();
                     DOM.txtInputBox.value = '';
                     break;
+                case 'update-ui':
+                    DOM.txtInputBox.value = data.text;
+                    break;
                 case 'time-up':
                     eliminatePlayer();
                     loadScore();
                     DOM.txtInputBox.value = '';
+                    break;
                 case 'session-left':
                     loadLobby(data);
+                    break;
             }
         });
 
@@ -493,6 +509,8 @@ function startMultiGame(serverLetter = null) {
         }
         startLetter = serverLetter;
         DOM.letterHolder.innerText = `Enter word beginning with ${startLetter}`;
+
+        updateMultiplayerUI();
     }
 
 }
@@ -502,6 +520,12 @@ function startMultiGame(serverLetter = null) {
 // Deze methode checkt na of het woord geldig is
 async function checkWord(word) {
     word = word.toLowerCase();
+    if (word.length < 0) return;
+    if (word.length == 1) {
+        loadError('A word, not a letter.')
+        wrongAnswer();
+        return;
+    }
 
     const res = await fetch(URL.enWoordenboek + word);
     const data = await res.json();
@@ -611,9 +635,21 @@ function nextPlayer() {
     }
 
     if (isConnected) {
-        DOM.currentPlayerTurn.innerText = players[currentPlayer].name.split('.')[1] + `'s turn`;
+        DOM.currentPlayerTurn.innerText = players[currentPlayer].name.split('.')[0] + `'s turn`;
+
+        updateMultiplayerUI();
     } else {
         DOM.currentPlayerTurn.innerText = players[currentPlayer].word + `'s turn`;
+    }
+}
+
+function updateMultiplayerUI() {
+    if (players[currentPlayer].name == savedPlayerInfo.username) {
+        DOM.txtInputBox.disabled = false;
+        DOM.btnSubmit.style.display = 'block';
+    } else {
+        DOM.txtInputBox.disabled = true;
+        DOM.btnSubmit.style.display = 'none';
     }
 }
 
@@ -634,14 +670,14 @@ function startTimer() {
             clearInterval(countDownTimer);
         }
         if (time == 0) {
-            if (isConnected) {
+            /* if (isConnected) {
                 const message = {
                     type: 'time-up',
                     currentplayer: players[currentPlayer]
                 };
                 console.log('Sending message:', message);
                 socket.send(JSON.stringify(message));
-            }
+            } */
             eliminatePlayer();
             clearInterval(countDownTimer);
             if (currentPlayer != -1) {
