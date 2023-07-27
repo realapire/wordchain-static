@@ -223,8 +223,6 @@ MultiplayerDOM.btnStartGame.addEventListener('click', function () {
         }
     }
 
-    createMatch(players.map(player => player.fetchid), host.fetchid);
-
     const message = {
         type: 'start-session',
     };
@@ -242,14 +240,21 @@ if (!savedPlayerInfo) {
     askPlayerInfo();
 } else {
     username = savedPlayerInfo.username;
+    if (username.length < 3) {
+        location.href = 'https://google.com';
+    }
     LoginDOM.usernameHolder.innerText = 'Hello, ' + savedPlayerInfo.username.split('.')[0];
 }
 
 async function askPlayerInfo() {
     LoginDOM.frmLogin.classList.remove('hidden');
     LoginDOM.btnLogin.addEventListener('click', async function () {
-        savedPlayerInfo = await getPlayerInfo();
+        if (LoginDOM.txtEmail.value.length < 3) {
+            alert('Username should be longer than 3 characters');
+            return;
+        }
 
+        savedPlayerInfo = await getPlayerInfo();
         username = savedPlayerInfo.username;
         LoginDOM.usernameHolder.innerText = 'Hello, ' + savedPlayerInfo.username.split('.')[0];
         localStorage.setItem('playerInformation', JSON.stringify(savedPlayerInfo));
@@ -258,27 +263,7 @@ async function askPlayerInfo() {
 }
 
 async function getPlayerInfo() {
-    const formData = new FormData();
-    formData.append('identity', LoginDOM.txtEmail.value);
-    formData.append('password', LoginDOM.txtPassword.value);
-    const options = {
-        method: 'POST',
-        body: formData,
-        redirect: 'follow'
-    }
-    const resp = await fetch('https://lucas-miserez.be/api/collections/person/auth-with-password', options);
-    if (!resp.ok) {
-        loadError('Error fetching account');
-        return 'error';
-    }
-    const data = await resp.json();
-    if (!data.token) {
-        loadError('User has not been found');
-        return 'error';
-    }
-
-    const playerInfo = { id: data.record.id, username: data.record.username, email: LoginDOM.txtEmail.value, token: data.token };
-
+    const playerInfo = { username: LoginDOM.txtEmail.value };
     return playerInfo;
 }
 
@@ -293,7 +278,6 @@ let players = [];
 let currentPlayer = -1;
 
 let eliminatedPlayers = [];
-const teamID = 'foz0mvij5qb59dq';
 //
 
 // Gamemode
@@ -389,8 +373,6 @@ function getRandomWord() {
 function startSingleplayer() {
     players.push({ 'name': username, 'score': 0 });
 
-    createMatch(savedPlayerInfo.id, savedPlayerInfo.id);
-
     loadNewLetter();
 }
 
@@ -398,91 +380,6 @@ function startSingleplayer() {
 // API calls
 
 let matchId = '';
-
-async function createMatch(spelers, hostID) {
-	var myHeaders = new Headers();
-	myHeaders.append("Content-Type", "application/json");
-	myHeaders.append("Authorization", "Bearer " + savedPlayerInfo.token);
-
-	var raw = JSON.stringify({
-		"spelers": spelers,
-		"host": hostID,    
-		"team": teamID
-	});
-
-	var requestOptions = {
-		method: 'POST',
-		headers: myHeaders,
-		body: raw,
-		redirect: 'follow'
-	};
-
-	await fetch("https://lucas-miserez.be/api/collections/match/records", requestOptions)
-		.then(response => response.json())
-		.then(result => {
-                matchId = result.id;
-            
-		})
-		.catch(error => console.log('error', error));
-}
-
-let collectionScoreIds = [];
-
-async function createScorePerPlayer(playerId, plaats, score) {
-	var myHeaders = new Headers();
-	myHeaders.append("Content-Type", "application/json");
-	myHeaders.append("Authorization", "Bearer " + savedPlayerInfo.token);
-
-	var raw = JSON.stringify({
-		"player": playerId,
-		"plaats": plaats,
-		"score": score,
-		"score_is_van_team": teamID
-	});
-
-	var requestOptions = {
-		method: 'POST',
-		headers: myHeaders,
-		body: raw,
-		redirect: 'follow'
-	};
-
-	await fetch("https://lucas-miserez.be/api/collections/score/records", requestOptions)
-		.then(response => response.json())
-		.then(result => {
-            if (host.fetchid == playerId) {
-                collectionScoreIds.push(result.id);
-            }
-		})
-		.catch(error => loadError('error', error));
-
-    console.log(collectionScoreIds);
-}
-
-async function endGame(userIdVanWinnaar) {
-	var myHeaders = new Headers();
-	myHeaders.append("Content-Type", "application/json");
-	myHeaders.append("Authorization", "Bearer " + savedPlayerInfo.token);
-
-	var raw = JSON.stringify({
-		"scores": collectionScoreIds,
-		"winnaar": userIdVanWinnaar,
-		"d0n3": true
-	});
-
-	var requestOptions = {
-		method: 'PATCH',
-		headers: myHeaders,
-		body: raw,
-		redirect: 'follow'
-	};
-
-	fetch("https://lucas-miserez.be/api/collections/match/records/" + matchId, requestOptions)
-		.then(response => response.text())
-		.then(result => console.log(result))
-		.catch(error => console.error('error', error));
-}
-
 
 function startMultiGame(serverLetter = null) {
     if (!document.querySelector('.multiplayerLobby').classList.contains('hidden')) {
@@ -784,24 +681,6 @@ function finish() {
             }
         }
     });
-
-    
-    if (currentPlayer == -1) {
-        createScorePerPlayer(savedPlayerInfo.id, 1, players[0].score);
-        endGame(savedPlayerInfo.id);
-    } else {
-        if (isConnected) {
-            console.log(getCurrentPlayerById());
-            // console.log(eliminatedPlayers[getCurrentPlayerById()], players[getCurrentPlayerById()].score);
-            console.log(getPlayerPosition());
-                
-            // if host : 
-            if (host.fetchid == savedPlayerInfo.id) {
-                createScorePerPlayer(savedPlayerInfo.id, getPlayerPosition(), players[getCurrentPlayerById()].score);
-                endGame(first.fetchid);
-            }
-        }    
-    }
 
     GamemodesDOM.gamePanel.classList.add('hidden');
 }
