@@ -152,7 +152,6 @@ function sendJoinMessage() {
         username: username,
         fetchedId: savedPlayerInfo.id
     };
-    console.log('Sending message:', message);
     socket.send(JSON.stringify(message));
 }
 
@@ -165,7 +164,6 @@ function loadLobby(data) {
     }
     MultiplayerDOM.playersHolder.innerHTML = '';
     const hostName = data.host;
-    console.log('hostname', hostName);
 
     MultiplayerDOM.lobbyCode.innerText = data.sessionId;
     players = data.players;
@@ -193,7 +191,6 @@ MultiplayerDOM.btnHostSession.addEventListener('click', function () {
     const message = {
         type: 'create-session'
     }
-    console.log('Sending message:', message);
     socket.send(JSON.stringify(message));
 });
 
@@ -202,7 +199,6 @@ MultiplayerDOM.btnJoinSession.addEventListener('click', function () {
         type: 'join-session',
         sessionId: MultiplayerDOM.txtSessionId.value
     }
-    console.log('Sending message:', message);
     socket.send(JSON.stringify(message));
 });
 
@@ -233,8 +229,6 @@ MultiplayerDOM.btnStartGame.addEventListener('click', function () {
 
 let savedPlayerInfo = JSON.parse(localStorage.getItem('playerInformation')) || '';
 let username = '';
-
-console.log(savedPlayerInfo);
 
 if (!savedPlayerInfo) {
     askPlayerInfo();
